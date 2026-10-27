@@ -6,9 +6,17 @@ import click
 from flask import Flask, abort, flash, g, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 
+# Cloud Run sets K_SERVICE. There, only /tmp is guaranteed writable, and a
+# fixed dev key would let anyone forge a login, so use a random one.
+ON_CLOUD_RUN = "K_SERVICE" in os.environ
+
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-change-me")
-app.config["DATABASE"] = os.path.join(app.root_path, "food.db")
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or (
+    os.urandom(32) if ON_CLOUD_RUN else "dev-change-me"
+)
+app.config["DATABASE"] = os.environ.get("DATABASE_PATH") or (
+    "/tmp/food.db" if ON_CLOUD_RUN else os.path.join(app.root_path, "food.db")
+)
 
 MAX_REVIEW_LENGTH = 500
 MAX_ITEM_NAME_LENGTH = 80
@@ -394,5 +402,11 @@ def not_found(error):
     return render_template("404.html"), 404
 
 
+# food.db is gitignored, so create it (and the places) on startup. Safe to repeat.
+with app.app_context():
+    init_db()
+
+
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    app.run(debug=not ON_CLOUD_RUN, host="0.0.0.0" if ON_CLOUD_RUN else "127.0.0.1",
+            port=int(os.environ.get("PORT", 5001)))
