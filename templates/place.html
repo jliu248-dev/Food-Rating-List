@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stars, area_badge, plural, big_score, distribution, review_list %}
+{% block title %}{{ place.name }} · Rate the Food{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('index') }}">← All places</a>
+
+<section class="card detail-hero">
+  <div>
+    <h1>{{ place.name }}</h1>
+    <p class="meta">{{ area_badge(place.area) }}<span>📍 {{ place.location or "" }}</span></p>
+    {% if place.description %}<p class="desc">{{ place.description }}</p>{% endif %}
+  </div>
+  {{ big_score(summary, my_rating, url_for('rate_place', place_id=place.id)) }}
+</section>
+
+<div class="detail-grid">
+  <div class="stack">
+    <section class="card card-pad">
+      <div class="section-head">
+        <h2>Dishes</h2>
+        <span class="muted">{{ items|length }} {{ "dish" if items|length == 1 else "dishes" }}</span>
+      </div>
+      {% if items %}
+        <ul class="dish-list">
+          {% for i in items %}
+            <li class="dish">
+              <a class="dish-name" href="{{ url_for('item', item_id=i.id) }}">{{ i.name }}</a>
+              <span class="dish-score">
+                {% if i.avg_score is not none %}
+                  {{ stars(i.avg_score) }} {{ "%.1f"|format(i.avg_score) }}
+                  <span class="count">({{ i.num_ratings }})</span>
+                {% else %}
+                  <span class="count">Not rated yet</span>
+                {% endif %}
+              </span>
+              <a class="btn btn-ghost" href="{{ url_for('rate_item', item_id=i.id) }}">Rate</a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty"><span class="empty-emoji" aria-hidden="true">🍽️</span>No dishes yet. What did you order here?</p>
+      {% endif %}
+
+      {% if g.user %}
+        <form class="add-dish" method="post" action="{{ url_for('add_item', place_id=place.id) }}">
+          <label class="sr-only" for="dish-name">Dish name</label>
+          <input type="text" id="dish-name" name="name" placeholder="Add a dish, e.g. Chicken burrito" maxlength="{{ max_item_len }}" required>
+          <button class="btn btn-primary" type="submit">Add dish</button>
+        </form>
+      {% else %}
+        <p class="form-foot"><a href="{{ url_for('login', next=request.path) }}">Log in</a> to add and rate dishes.</p>
+      {% endif %}
+    </section>
+
+    {{ review_list(reviews, "Reviews of " ~ place.name) }}
+  </div>
+
+  <aside class="stack">
+    {{ distribution(summary) }}
+  </aside>
+</div>
+{% endblock %}

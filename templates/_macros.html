@@ -1,0 +1,83 @@
+{# Star display that can show partial stars, e.g. 4.3 #}
+{% macro stars(avg, size="") -%}
+<span class="stars {{ size }}" role="img"
+      aria-label="{{ ('%.1f out of 5 stars'|format(avg)) if avg is not none else 'No ratings yet' }}"><span
+      class="stars-fill" style="width: {{ (avg / 5 * 100) if avg is not none else 0 }}%"></span></span>
+{%- endmacro %}
+
+{% macro area_badge(area) -%}
+{% if area %}<span class="badge badge-{{ area }}">{{ AREAS[area] }}</span>{% endif %}
+{%- endmacro %}
+
+{% macro plural(n, word) -%}
+{{ n }} {{ word }}{{ "s" if n != 1 }}
+{%- endmacro %}
+
+{# Big score block shown at the top of a place or dish page #}
+{% macro big_score(summary, my_rating, rate_url) %}
+<div class="big-score">
+  {% if summary.count %}
+    <div class="score-num">{{ "%.1f"|format(summary.avg) }}</div>
+    {{ stars(summary.avg, "stars-lg") }}
+    <div class="score-count">{{ plural(summary.count, "rating") }}</div>
+  {% else %}
+    <div class="score-num muted">–</div>
+    {{ stars(none, "stars-lg") }}
+    <div class="score-count">No ratings yet</div>
+  {% endif %}
+  {% if g.user %}
+    <a class="btn {{ 'btn-ghost' if my_rating else 'btn-primary' }}" href="{{ rate_url }}">
+      {{ "Edit your rating" if my_rating else "★ Rate it" }}
+    </a>
+  {% else %}
+    <a class="btn btn-primary" href="{{ url_for('login', next=request.path) }}">Log in to rate</a>
+  {% endif %}
+</div>
+{% endmacro %}
+
+{# Ratings breakdown: one bar per star level, length = share of all ratings #}
+{% macro distribution(summary) %}
+<figure class="dist card card-pad">
+  <figcaption>Ratings breakdown</figcaption>
+  {% if summary.count %}
+    {% for s in [5, 4, 3, 2, 1] %}
+      {% set n = summary.dist[s] %}
+      {% set pct = n / summary.count * 100 %}
+      <div class="dist-row" tabindex="0"
+           data-tip-value="{{ plural(n, 'rating') }}"
+           data-tip="{{ s }} star{{ 's' if s != 1 }} · {{ pct|round|int }}%">
+        <span class="dist-label">{{ s }} ★</span>
+        <span class="dist-track"><span class="dist-bar" style="width: {{ pct }}%"></span></span>
+        <span class="dist-count">{{ n }}</span>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p class="empty"><span class="empty-emoji" aria-hidden="true">📊</span>The chart fills in once people start rating.</p>
+  {% endif %}
+</figure>
+{% endmacro %}
+
+{% macro review_list(reviews, title="Reviews") %}
+<section class="card card-pad">
+  <div class="section-head">
+    <h2>{{ title }}</h2>
+    <span class="muted">{{ plural(reviews|length, "review") }}</span>
+  </div>
+  {% for r in reviews %}
+    <article class="review">
+      <div class="avatar" aria-hidden="true">{{ r.username[:1] }}</div>
+      <div>
+        <div class="review-head">
+          <strong>{{ r.username }}</strong>
+          {% if g.user and g.user.username == r.username %}<span class="you">You</span>{% endif %}
+          {{ stars(r.score) }}
+          <span class="review-date">{{ r.updated_on or r.created_on }}{% if r.updated_on %} · edited{% endif %}</span>
+        </div>
+        {% if r.review %}<p>{{ r.review }}</p>{% endif %}
+      </div>
+    </article>
+  {% else %}
+    <p class="empty"><span class="empty-emoji" aria-hidden="true">💬</span>No reviews yet. Be the first!</p>
+  {% endfor %}
+</section>
+{% endmacro %}

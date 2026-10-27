@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Rate {{ heading }} · Rate the Food{% endblock %}
+{% block content %}
+<div class="form-page">
+  <a class="back" href="{{ back_url }}">← Back</a>
+  <div class="card card-pad">
+    <div class="eyebrow">{{ "Edit your rating" if is_edit else "New rating" }}</div>
+    <h1>{{ heading }}</h1>
+    <p class="lead">{{ subheading }}</p>
+
+    <form method="post">
+      <fieldset class="star-picker">
+        <legend>Your rating</legend>
+        <div class="star-inputs">
+          {% for s in [5, 4, 3, 2, 1] %}
+            <input type="radio" id="star{{ s }}" name="score" value="{{ s }}" required
+                   {% if existing and existing.score == s %}checked{% endif %}>
+            <label for="star{{ s }}"><span aria-hidden="true">★</span><span class="sr-only">{{ s }} star{{ "s" if s != 1 }}</span></label>
+          {% endfor %}
+        </div>
+        <span class="star-word" aria-hidden="true"></span>
+      </fieldset>
+
+      <div class="field">
+        <label for="review">Short review <span class="muted">(optional)</span></label>
+        <textarea id="review" name="review" maxlength="{{ max_len }}" data-counter="review-count"
+                  placeholder="What was good? What wasn't?">{{ existing.review if existing and existing.review else "" }}</textarea>
+        <span class="hint" id="review-count"></span>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary btn-lg" type="submit">{{ "Save changes" if is_edit else "Post rating" }}</button>
+        <a class="btn btn-plain" href="{{ back_url }}">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

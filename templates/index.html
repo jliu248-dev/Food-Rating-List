@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stars, area_badge, plural %}
+{% block content %}
+<section class="hero">
+  <h1>The best food around SCU,<br class="wide-only"> ranked by students.</h1>
+  <p>Rate campus dining spots and the restaurants nearby, then rate the exact dishes you ordered.</p>
+  {% if not g.user %}
+    <div class="hero-cta">
+      <a class="btn btn-primary btn-lg" href="{{ url_for('register') }}">Create an account to rate</a>
+      <a class="btn btn-ghost btn-lg" href="{{ url_for('login') }}">Log in</a>
+    </div>
+  {% endif %}
+</section>
+
+<nav class="filters" aria-label="Filter places">
+  <a class="chip" href="{{ url_for('index') }}" {% if not area %}aria-current="page"{% endif %}>All places</a>
+  {% for key, label in AREAS.items() %}
+    <a class="chip" href="{{ url_for('index', area=key) }}" {% if area == key %}aria-current="page"{% endif %}>{{ label }}</a>
+  {% endfor %}
+</nav>
+
+<div class="layout">
+  <ol class="ranking">
+    {% set ns = namespace(rank=0) %}
+    {% for p in places %}
+      {% if p.avg_score is not none %}{% set ns.rank = ns.rank + 1 %}{% endif %}
+      <li>
+        <a class="place-card card" href="{{ url_for('place', place_id=p.id) }}">
+          {% if p.avg_score is not none %}
+            <span class="rank rank-{{ ns.rank }}" aria-label="Rank {{ ns.rank }}">{{ ns.rank }}</span>
+          {% else %}
+            <span class="rank rank-none" aria-label="Not ranked yet">–</span>
+          {% endif %}
+          <div>
+            <h3>{{ p.name }}</h3>
+            <p class="meta">
+              {{ area_badge(p.area) }}
+              <span>{{ p.location or "" }}</span>
+              {% if p.num_items %}<span>· {{ p.num_items }} {{ "dish" if p.num_items == 1 else "dishes" }}</span>{% endif %}
+            </p>
+          </div>
+          <div class="score-block">
+            {% if p.avg_score is not none %}
+              <div class="score-row">{{ stars(p.avg_score) }}<span class="score-num">{{ "%.1f"|format(p.avg_score) }}</span></div>
+              <div class="score-count">{{ plural(p.num_ratings, "rating") }}</div>
+            {% else %}
+              <span class="score-empty">No ratings yet</span>
+            {% endif %}
+          </div>
+        </a>
+      </li>
+    {% else %}
+      <li class="card card-pad empty">No places here yet.</li>
+    {% endfor %}
+  </ol>
+
+  <aside class="layout-side">
+    <section class="card card-pad">
+      <div class="section-head"><h2>Top dishes</h2></div>
+      {% if top_items %}
+        <ul class="mini-list">
+          {% for i in top_items %}
+            <li>
+              <a class="mini-item" href="{{ url_for('item', item_id=i.id) }}">
+                <span>
+                  <span class="mini-name">{{ i.name }}</span><br>
+                  <span class="mini-sub">{{ i.place_name }} · {{ plural(i.num_ratings, "rating") }}</span>
+                </span>
+                <span class="mini-score">{{ "%.1f"|format(i.avg_score) }}{{ stars(i.avg_score) }}</span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty"><span class="empty-emoji" aria-hidden="true">🌮</span>No dishes rated yet. Open a place and add the dish you ordered.</p>
+      {% endif %}
+    </section>
+  </aside>
+</div>
+{% endblock %}

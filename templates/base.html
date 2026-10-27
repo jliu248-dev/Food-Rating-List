@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Rate the Food · SCU{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="{{ url_for('index') }}">
+        <span class="brand-mark" aria-hidden="true">★</span>
+        <span>
+          <span class="brand-name">Rate the Food</span>
+          <span class="brand-tag">Santa Clara University</span>
+        </span>
+      </a>
+      <nav class="nav">
+        {% if g.user %}
+          <span class="nav-user">
+            <span class="avatar" aria-hidden="true" style="width:32px;height:32px;font-size:.85rem">{{ g.user.username[:1] }}</span>
+            <span class="hello">{{ g.user.username }}</span>
+          </span>
+          <form action="{{ url_for('logout') }}" method="post">
+            <button type="submit" class="btn btn-plain">Log out</button>
+          </form>
+        {% else %}
+          <a class="btn btn-plain" href="{{ url_for('login') }}">Log in</a>
+          <a class="btn btn-primary" href="{{ url_for('register') }}">Sign up</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flashes" role="status">
+          {% for message in messages %}<div class="flash">{{ message }}</div>{% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">Rate the Food · Made for OMIS 107 at Santa Clara University</div>
+  </footer>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

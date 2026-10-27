@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "_macros.html" import area_badge, big_score, distribution, review_list %}
+{% block title %}{{ item.name }} at {{ item.place_name }} · Rate the Food{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('place', place_id=item.place_id) }}">← {{ item.place_name }}</a>
+
+<section class="card detail-hero">
+  <div>
+    <div class="eyebrow">Dish</div>
+    <h1>{{ item.name }}</h1>
+    <p class="meta">
+      <span>at <a href="{{ url_for('place', place_id=item.place_id) }}">{{ item.place_name }}</a></span>
+      {{ area_badge(item.place_area) }}
+    </p>
+  </div>
+  {{ big_score(summary, my_rating, url_for('rate_item', item_id=item.id)) }}
+</section>
+
+<div class="detail-grid">
+  <div class="stack">
+    {{ review_list(reviews) }}
+  </div>
+  <aside class="stack">
+    {{ distribution(summary) }}
+  </aside>
+</div>
+{% endblock %}
